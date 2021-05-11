@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+PORT=$1
+DBDIR=$2
+EXEDIR=$3
+
+if [[ ! "$(ls -A $DBDIR)" ]]; then
+    mkdir -p $DBDIR
+    echo "Generating keys in $DBDIR"
+    ${EXEDIR}/tangd-keygen $DBDIR
+fi
+echo "Server fingerprint: "
+basename $(grep -l '"key_ops":\["sign","verify"\]' ${DBDIR}/*) .jwk
+echo "Starting to listen on port ${PORT}"
+exec socat tcp-listen:${PORT},fork exec:"${EXEDIR}/tangd $DBDIR"
